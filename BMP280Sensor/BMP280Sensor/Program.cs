@@ -1,6 +1,11 @@
 using System;
+using System.Device.I2c;
 using System.Diagnostics;
 using System.Threading;
+using Iot.Device.Bmxx80;
+using Iot.Device.Bmxx80.FilteringMode;
+using Iot.Device.Common;
+using UnitsNet;
 
 namespace BMP280Sensor
 {
@@ -8,13 +13,35 @@ namespace BMP280Sensor
     {
         public static void Main()
         {
-            Debug.WriteLine("Hello from nanoFramework!");
+            Debug.WriteLine("Hello Bmp280!");
 
-            Thread.Sleep(Timeout.Infinite);
+            Length stationHeight = Length.FromMeters(640); // Elevation of the sensor
 
-            // Browse our samples repository: https://github.com/nanoframework/samples
-            // Check our documentation online: https://docs.nanoframework.net/
-            // Join our lively Discord community: https://discord.gg/gCyBu8T
+            // bus id on the ESP32
+            const int busId = 1;
+
+            I2cConnectionSettings i2cSettings = new(busId, Bmp280.DefaultI2cAddress);
+            I2cDevice i2cDevice = I2cDevice.Create(i2cSettings);
+            using var i2CBmp280 = new Bmp280(i2cDevice);
+
+            while (true)
+            {
+                // set higher sampling
+                i2CBmp280.TemperatureSampling = Sampling.LowPower;
+                i2CBmp280.PressureSampling = Sampling.UltraHighResolution;
+
+                // Perform a synchronous measurement
+                var readResult = i2CBmp280.Read();
+
+                // Print out the measured data
+                Debug.WriteLine("-----------------------------------------");
+                Debug.WriteLine($"Temperature: {readResult.Temperature.DegreesCelsius}\u00B0C");
+                Debug.WriteLine($"Pressure: {readResult.Pressure.Hectopascals}hPa");
+
+                i2CBmp280.TryReadAltitude(out var altValue);
+                Debug.WriteLine($"Calculated Altitude: {altValue.Meters}m");
+                Thread.Sleep(2000);
+            }
         }
     }
 }
