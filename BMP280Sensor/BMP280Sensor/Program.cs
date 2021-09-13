@@ -15,8 +15,6 @@ namespace BMP280Sensor
         {
             Debug.WriteLine("Hello Bmp280!");
 
-            Length stationHeight = Length.FromMeters(640); // Elevation of the sensor
-
             // bus id on the ESP32
             const int busId = 1;
 
@@ -32,14 +30,14 @@ namespace BMP280Sensor
 
                 // Perform a synchronous measurement
                 var readResult = i2CBmp280.Read();
+                i2CBmp280.TryReadAltitude(out var altValue);
 
                 // Print out the measured data
                 Debug.WriteLine("-----------------------------------------");
                 Debug.WriteLine($"Temperature: {readResult.Temperature.DegreesCelsius}\u00B0C");
                 Debug.WriteLine($"Pressure: {readResult.Pressure.Hectopascals}hPa");
+                Debug.WriteLine($"Altitude: {altValue.Meters}m");
 
-                i2CBmp280.TryReadAltitude(out var altValue);
-                Debug.WriteLine($"Calculated Altitude: {altValue.Meters}m");
                 Thread.Sleep(2000);
             }
         }
